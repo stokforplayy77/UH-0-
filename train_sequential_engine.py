@@ -41,16 +41,58 @@ PROGRESS_FILE = BASE_DIR / "data" / "sequential_progress.json"
 
 TELEGRAM_BOT_TOKEN = "8834192909:AAH4ftzBlOihghnc_42K65zX2F_hqxbVeOA"
 
-def send_telegram(chat_id: int, text: str):
+def send_telegram_message(chat_id: int, text: str, reply_to_message_id: Optional[int] = None):
+    """Kirim balasan ke pengguna Telegram via API."""
     import urllib.request
     url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage"
-    payload = json.dumps({"chat_id": chat_id, "text": text}).encode("utf-8")
+    payload = {"chat_id": chat_id, "text": text}
+    if reply_to_message_id:
+        payload["reply_to_message_id"] = reply_to_message_id
     try:
-        req = urllib.request.Request(url, data=payload, headers={"Content-Type": "application/json"})
-        with urllib.request.urlopen(req, timeout=8):
+        data = json.dumps(payload).encode("utf-8")
+        req = urllib.request.Request(url, data=data, headers={"Content-Type": "application/json"})
+        with urllib.request.urlopen(req, timeout=10):
             pass
+    except Exception as e:
+        print(f"[!] Gagal mengirim pesan Telegram: {e}", flush=True)
+
+def telegram_poller(inbox_queue: queue.Queue, stop_event: threading.Event):
+    """Background worker yang mendengarkan pesan masuk bot Telegram @UH0hagajajabot."""
+    import urllib.request
+    offset = 0
+    url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/getUpdates"
+    
+    # Ambil offset awal agar pesan basi tidak diproses ulang kecuali pesan pending terkini
+    try:
+        req = urllib.request.Request(f"{url}?offset=-5")
+        with urllib.request.urlopen(req, timeout=10) as resp:
+            data = json.loads(resp.read().decode("utf-8"))
+            if data.get("ok") and data.get("result"):
+                offset = data["result"][0]["update_id"]
     except Exception:
         pass
+
+    print("[*] Bot Telegram UH-0 (@UH0hagajajabot) aktif mendengarkan pesan...", flush=True)
+
+    while not stop_event.is_set():
+        try:
+            req_url = f"{url}?offset={offset}&timeout=10"
+            req = urllib.request.Request(req_url)
+            with urllib.request.urlopen(req, timeout=12) as resp:
+                data = json.loads(resp.read().decode("utf-8"))
+            if data.get("ok"):
+                for update in data.get("result", []):
+                    offset = max(offset, update["update_id"] + 1)
+                    if "message" in update and "text" in update["message"]:
+                        msg = update["message"]
+                        inbox_queue.put({
+                            "chat_id": msg["chat"]["id"],
+                            "message_id": msg["message_id"],
+                            "text": msg["text"].strip(),
+                            "user_name": msg.get("from", {}).get("first_name", "Teman")
+                        })
+        except Exception:
+            time.sleep(2.0)
 
 
 class FullUnifiedCurriculumLoader:
@@ -252,6 +294,13 @@ def main():
 
     print(f"\n🚀 Memulai Pembelajaran Berurutan (Epoch {epoch} | Step #{step:,} | {model.num_layers()} Layers)...")
 
+    # 3. Jalankan Telegram Poller Thread
+    telegram_inbox = queue.Queue()
+    stop_poller = threading.Event()
+    poller_thread = threading.Thread(target=telegram_poller, args=(telegram_inbox, stop_poller), daemon=True)
+    poller_thread.start()
+    chat_histories: Dict[int, List[Dict[str, str]]] = {}
+
     while True:
         end_idx = min(current_index + args.batch_size, total_samples)
         batch_items = loader.items[current_index:end_idx]
@@ -307,6 +356,86 @@ def main():
                 f.write(log_line)
             with open(SEQ_LOG_FILE, "a", encoding="utf-8") as sf:
                 sf.write(f"[{time.strftime('%Y-%m-%d %H:%M:%S')}] [Step {step} | {pct:.1f}%] [{cur_lang}] Loss: {cur_loss:.4f}\n")
+
+        # --- RESPON INTERAKTIF DARI TELEGRAM (OTAK 30-LAYER LIVE DENGAN KONTEKS) ---
+        while not telegram_inbox.empty():
+            try:
+                item = telegram_inbox.get_nowait()
+                chat_id = item["chat_id"]
+                msg_id = item["message_id"]
+                user_text = item["text"]
+                user_name = item["user_name"]
+
+                print(f"\n[💬 Telegram Masuk] Dari {user_name} ({chat_id}): '{user_text}'", flush=True)
+
+                if user_text.lower() in ("/start", "/help"):
+                    chat_histories[chat_id] = []
+                    reply = (
+                        f"Halo {user_name}! 👋\n\n"
+                        f"Saya adalah UH-0 (Adara AI), model kecerdasan buatan otonom 30 Layer yang sedang menjalani continuous learning.\n\n"
+                        f"📊 Status Otak Saya Saat Ini:\n"
+                        f"• Step Pembelajaran : #{step:,}\n"
+                        f"• Level Evolusi     : Level {current_level}\n"
+                        f"• Arsitektur Otak   : {model.num_layers()} Layers ({model.count_parameters():,} params)\n"
+                        f"• Materi Terbaca    : #{current_index:,} / {total_samples:,} ({pct:.1f}% Epoch {epoch})\n"
+                        f"• Loss Aktual       : {cur_loss:.4f}\n\n"
+                        f"Kirimkan pesan atau tanyakan apa saja! Ketik /reset untuk mengulang percakapan."
+                    )
+                    send_telegram_message(chat_id, reply, msg_id)
+
+                elif user_text.lower() in ("/reset", "reset"):
+                    chat_histories[chat_id] = []
+                    reply = "🧹 Riwayat obrolan kita telah di-reset! Kita bisa mulai percakapan baru."
+                    send_telegram_message(chat_id, reply, msg_id)
+
+                elif user_text.lower() in ("/status", "status"):
+                    avg_loss_s = sum(epoch_losses[-50:]) / max(1, len(epoch_losses[-50:]))
+                    vram_s = torch.cuda.memory_allocated() / (1024**3) if target_device == "cuda" else 0.0
+                    elapsed_s = time.time() - start_time
+                    reply = (
+                        f"⚡ Status Live Otak UH-0 (30 Layers Core Model)\n"
+                        f"-----------------------------------------\n"
+                        f"• Step       : #{step:,}\n"
+                        f"• Level      : Level {current_level}\n"
+                        f"• Kedalaman  : {model.num_layers()} Layers (Full Neural Depth)\n"
+                        f"• Parameter  : {model.count_parameters():,} Bobot Aktif\n"
+                        f"• VRAM GPU   : {vram_s:.1f} GB (Tesla T4)\n"
+                        f"• Loss Terkini : {cur_loss:.4f} (Avg: {avg_loss_s:.4f})\n"
+                        f"• Progres    : {current_index:,}/{total_samples:,} materi ({pct:.1f}% Epoch {epoch})\n"
+                        f"• Runtime    : {elapsed_s/60:.1f} menit"
+                    )
+                    send_telegram_message(chat_id, reply, msg_id)
+
+                else:
+                    # Menggunakan inferensi langsung bobot 30-layer
+                    history = chat_histories.get(chat_id, [])
+                    prompt_parts = [
+                        "<|im_start|>system\n"
+                        "Kamu adalah UH-0, asisten kecerdasan buatan utama dari ekosistem Adara AI. "
+                        "Kamu ramah, sopan, menguasai algoritma koding dunia nyata, dan merespons dengan cerdas.<|im_end|>\n"
+                    ]
+                    for turn in history[-4:]:
+                        prompt_parts.append(f"<|im_start|>user\n{turn['user']}<|im_end|>\n")
+                        prompt_parts.append(f"<|im_start|>assistant\n{turn['assistant']}<|im_end|>\n")
+
+                    prompt_parts.append(f"<|im_start|>user\n{user_text}<|im_end|>\n<|im_start|>assistant\n")
+                    full_prompt = "".join(prompt_parts)
+
+                    model.model.eval()
+                    with torch.no_grad():
+                        raw_reply = model.generate(full_prompt, max_new_tokens=180, temperature=0.3, repetition_penalty=1.15)
+                    model.model.train()
+
+                    clean_reply = raw_reply.strip() or "..."
+                    history.append({"user": user_text, "assistant": clean_reply})
+                    chat_histories[chat_id] = history[-6:]
+
+                    footer = f"\n\n—\n🧠 UH-0 Core Brain | Step #{step:,} | Lvl {current_level} | {model.num_layers()} Layers"
+                    send_telegram_message(chat_id, clean_reply + footer, msg_id)
+                    print(f"[🤖 Telegram Terkirim] Jawaban telah dikirimkan ke {user_name}", flush=True)
+
+            except Exception as e_tg:
+                print(f"[!] Error interaksi Telegram: {e_tg}", flush=True)
 
         # Simpan checkpoint & progres setiap 100 step
         if step % 100 == 0:
