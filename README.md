@@ -4,6 +4,18 @@
 
 ---
 
+## 📦 Download Model Checkpoint & Materi Training (v2.0)
+Semua bobot otak model dan seluruh materi pembelajaran telah dirilis secara resmi di [**GitHub Release v2.0-checkpoint**](https://github.com/stokforplayy77/UH-0-/releases/tag/v2.0-checkpoint):
+
+| Nama File | Ukuran | Deskripsi & Tautan Unduh Langsung |
+| :--- | :--- | :--- |
+| **`uh_zero_v2_checkpoint.pt`** | **1.11 GB** | [📥 Download Otak Model (30 Layer, Step #214k+)](https://github.com/stokforplayy77/UH-0-/releases/download/v2.0-checkpoint/uh_zero_v2_checkpoint.pt) |
+| **`real_algorithms_backup.tar.gz`** | **141.7 MB** | [📥 Download 153k+ Materi Algoritma Multi-Bahasa](https://github.com/stokforplayy77/UH-0-/releases/download/v2.0-checkpoint/real_algorithms_backup.tar.gz) |
+| **`conversations_bilingual.jsonl`** | **14.6 MB** | [📥 Download Materi Percakapan Bilingual ID/EN](https://github.com/stokforplayy77/UH-0-/releases/download/v2.0-checkpoint/conversations_bilingual.jsonl) |
+| **`teacher_lessons.jsonl`** | **8.3 MB** | [📥 Download Kurikulum Penalaran & Lesson Guru](https://github.com/stokforplayy77/UH-0-/releases/download/v2.0-checkpoint/teacher_lessons.jsonl) |
+
+---
+
 ## 🏛️ Arsitektur & Struktur Folder
 
 ```text
