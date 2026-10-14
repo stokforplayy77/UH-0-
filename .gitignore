@@ -1,0 +1,27 @@
+# Checkpoints and Model Weights (Large files)
+*.pt
+*.bin
+*.safetensors
+*.tar.gz
+*.zip
+*.pth
+*.onnx
+
+# Data caches & extracted datasets
+data/real_algorithms/
+data/backup_datasets/
+data/*.json.gz
+*.pid
+*.log
+logs/
+
+# Python cache & envs
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+.env
+
+# Backups
+backups/
+scratch/

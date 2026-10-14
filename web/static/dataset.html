@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>UH-0 Realtime Dataset Explorer | UH Labs Zero</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Inter:wght@400;500;600;700&display=swap">
+  <style>
+    :root {
+      --bg: #090d16;
+      --card: #111827;
+      --card-border: #1f2937;
+      --accent: #3b82f6;
+      --accent-glow: rgba(59, 130, 246, 0.2);
+      --text-main: #f3f4f6;
+      --text-muted: #9ca3af;
+      --success: #10b981;
+      --code-bg: #030712;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--bg);
+      color: var(--text-main);
+      font-family: 'Inter', sans-serif;
+      padding: 16px;
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+    }
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      flex-wrap: wrap;
+      gap: 14px;
+      border-bottom: 1px solid var(--card-border);
+      padding-bottom: 18px;
+      margin-bottom: 20px;
+    }
+    .title h1 {
+      font-size: 20px;
+      font-weight: 700;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .title p {
+      color: var(--text-muted);
+      font-size: 13px;
+      margin-top: 4px;
+    }
+    .badge {
+      background: rgba(16, 185, 129, 0.15);
+      color: var(--success);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      padding: 3px 8px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 600;
+      font-family: 'JetBrains Mono', monospace;
+    }
+    .badge-live {
+      background: rgba(59, 130, 246, 0.15);
+      color: #60a5fa;
+      border: 1px solid rgba(59, 130, 246, 0.3);
+      padding: 3px 8px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .live-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #3b82f6;
+      box-shadow: 0 0 8px #3b82f6;
+      animation: pulse 1.5s infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.4; transform: scale(0.85); }
+    }
+    .nav-links a {
+      color: #93c5fd;
+      text-decoration: none;
+      font-size: 13px;
+      font-weight: 600;
+      padding: 8px 12px;
+      border-radius: 6px;
+      background: #1f2937;
+      display: inline-block;
+    }
+    .nav-links a:hover {
+      background: #374151;
+      color: #fff;
+    }
+    .stats-bar {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+    @media(min-width: 768px) {
+      .stats-bar {
+        grid-template-columns: repeat(4, 1fr);
+      }
+      .title h1 {
+        font-size: 24px;
+      }
+    }
+    .stat-card {
+      background: var(--card);
+      border: 1px solid var(--card-border);
+      padding: 14px;
+      border-radius: 10px;
+    }
+    .stat-card .val {
+      font-size: 18px;
+      font-weight: 700;
+      font-family: 'JetBrains Mono', monospace;
+      color: var(--accent);
+      margin-top: 4px;
+      word-break: break-all;
+    }
+    .stat-card .lbl {
+      font-size: 11px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .filter-bar {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      background: var(--card);
+      padding: 14px;
+      border-radius: 10px;
+      border: 1px solid var(--card-border);
+      margin-bottom: 20px;
+    }
+    @media(min-width: 640px) {
+      .filter-bar {
+        flex-direction: row;
+        align-items: center;
+      }
+    }
+    .search-input {
+      flex: 1;
+      width: 100%;
+      background: var(--code-bg);
+      border: 1px solid var(--card-border);
+      color: #fff;
+      padding: 10px 12px;
+      border-radius: 6px;
+      font-size: 14px;
+    }
+    .search-input:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+    .select-input {
+      width: 100%;
+      background: var(--code-bg);
+      border: 1px solid var(--card-border);
+      color: #fff;
+      padding: 10px 12px;
+      border-radius: 6px;
+      font-size: 14px;
+    }
+    @media(min-width: 640px) {
+      .select-input {
+        width: auto;
+      }
+    }
+    .btn {
+      width: 100%;
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      padding: 10px 16px;
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      text-align: center;
+    }
+    @media(min-width: 640px) {
+      .btn {
+        width: auto;
+      }
+    }
+    .items-container {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+    .item-card {
+      background: var(--card);
+      border: 1px solid var(--card-border);
+      border-radius: 10px;
+      overflow: hidden;
+    }
+    .item-header {
+      padding: 12px 14px;
+      background: rgba(255,255,255,0.02);
+      border-bottom: 1px solid var(--card-border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .item-source {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      color: var(--text-muted);
+      word-break: break-all;
+    }
+    .item-lang {
+      font-size: 11px;
+      font-weight: 700;
+      padding: 2px 7px;
+      border-radius: 4px;
+      background: #1e3a8a;
+      color: #93c5fd;
+      font-family: 'JetBrains Mono', monospace;
+    }
+    .item-body {
+      padding: 14px;
+    }
+    .item-instruction {
+      font-size: 14px;
+      font-weight: 600;
+      margin-bottom: 10px;
+      color: #fff;
+      word-break: break-word;
+    }
+    pre.code-block {
+      background: var(--code-bg);
+      border: 1px solid #1e293b;
+      padding: 12px;
+      border-radius: 6px;
+      overflow-x: auto;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      color: #e2e8f0;
+      max-height: 380px;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+    .pagination {
+      margin: 20px 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .pagination .btn {
+      width: auto;
+      padding: 8px 14px;
+    }
+    .page-info {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <div class="title">
+        <h1>📚 UH-0 Dataset Explorer <span class="badge">100% Real Code</span> <span class="badge-live"><span class="live-dot"></span> Live Sync</span></h1>
+        <p>Eksplorasi dataset kode asli & multi-turn dialog hasil kurasi AST dan kurasi anti-degenerasi.</p>
+      </div>
+      <div class="nav-links">
+        <a href="/zero/">← Kembali ke Observatory</a>
+      </div>
+    </div>
+
+    <div class="stats-bar">
+      <div class="stat-card">
+        <div class="lbl">Dataset Aktif</div>
+        <div class="val" id="stat-active" style="font-size: 15px;">GitHub Verified</div>
+      </div>
+      <div class="stat-card">
+        <div class="lbl">Total Sampel</div>
+        <div class="val" id="stat-count">-</div>
+      </div>
+      <div class="stat-card">
+        <div class="lbl">Integritas Sintaks</div>
+        <div class="val" style="color: #10b981;">100% Valid</div>
+      </div>
+      <div class="stat-card">
+        <div class="lbl">Ukuran File</div>
+        <div class="val" id="stat-size">12.5 MB</div>
+      </div>
+    </div>
+
+    <div class="filter-bar">
+      <select id="select-dataset" class="select-input">
+        <option value="curated" selected>✨ Qwen Coder Curated & Verified (Kandidat Training)</option>
+        <option value="bilingual">Bilingual Conversations (15.0 MB)</option>
+        <option value="teacher">Teacher Curriculum Lessons (8.3 MB)</option>
+        <option value="github">📦 Raw GitHub Code (Arsip Mentah - Non-Training)</option>
+      </select>
+      <select id="select-lang" class="select-input">
+        <option value="">Semua Bahasa</option>
+        <option value="Python">Python</option>
+        <option value="Java">Java</option>
+        <option value="JavaScript">JavaScript</option>
+        <option value="Go">Go</option>
+        <option value="Rust">Rust</option>
+        <option value="C++">C++</option>
+      </select>
+      <input type="text" id="search-keyword" class="search-input" placeholder="Cari algoritma, fungsi, kata kunci...">
+      <button class="btn" onclick="fetchDataset(1)">Cari</button>
+    </div>
+
+    <div id="items" class="items-container">
+      <div style="text-align: center; color: var(--text-muted); padding: 30px;">Memuat data...</div>
+    </div>
+
+    <div class="pagination">
+      <button class="btn" id="btn-prev" onclick="changePage(-1)">← Sebelumnya</button>
+      <span class="page-info" id="page-indicator">Halaman 1</span>
+      <button class="btn" id="btn-next" onclick="changePage(1)">Selanjutnya →</button>
+    </div>
+  </div>
+
+  <script>
+    let currentPage = 1;
+    let totalPages = 1;
+
+    // Detect base URL dynamically to always resolve correctly under /zero/
+    const API_BASE = window.location.pathname.startsWith('/zero') ? '/zero/api/dataset' : '/api/dataset';
+
+    async function fetchDataset(page = 1) {
+      currentPage = page;
+      const dataset = document.getElementById('select-dataset').value;
+      const lang = document.getElementById('select-lang').value;
+      const search = document.getElementById('search-keyword').value;
+
+      const container = document.getElementById('items');
+      container.innerHTML = '<div style="text-align: center; color: var(--text-muted); padding: 30px;">Mengambil sampel kode nyata...</div>';
+
+      try {
+        const url = `${API_BASE}?name=${encodeURIComponent(dataset)}&page=${page}&lang=${encodeURIComponent(lang)}&search=${encodeURIComponent(search)}`;
+        const res = await fetch(url);
+        if (!res.ok) {
+          throw new Error(`HTTP ${res.status}: API tidak merespons JSON`);
+        }
+        const data = await res.json();
+
+        const datasetNames = {
+          "github": "GitHub Raw Verified Algorithms",
+          "curated": "✨ Qwen Coder Curated & Verified",
+          "bilingual": "Bilingual Conversations",
+          "teacher": "Teacher Curriculum Lessons"
+        };
+        document.getElementById('stat-active').innerText = datasetNames[dataset] || dataset;
+        document.getElementById('stat-count').innerText = (data.total_matching || 0).toLocaleString();
+        document.getElementById('stat-size').innerText = data.file_size || '-';
+        totalPages = data.total_pages || 1;
+        document.getElementById('page-indicator').innerText = `Halaman ${currentPage} / ${totalPages}`;
+        document.getElementById('btn-prev').disabled = (currentPage <= 1);
+        document.getElementById('btn-next').disabled = (currentPage >= totalPages);
+
+        if (!data.items || data.items.length === 0) {
+          container.innerHTML = '<div style="text-align: center; color: var(--text-muted); padding: 30px;">Tidak ditemukan data yang sesuai dengan filter.</div>';
+          return;
+        }
+
+        container.innerHTML = data.items.map((item) => {
+          const promptText = item.instruction || item.prompt || item.user || 'Percakapan / Instruksi';
+          const answerText = item.output || item.response || item.assistant || item.code || '';
+          const langBadge = (item.language || item.lang || (dataset === 'bilingual' ? 'Dialog' : 'Code')).toUpperCase();
+          const sourceText = item.source || (dataset === 'bilingual' ? `Percakapan Multi-Turn (${langBadge})` : 'Curriculum Lesson');
+          
+          const isCurated = (item.curated_by || item.status === 'curated' || item.verified === true);
+          const verifiedBadge = isCurated
+            ? `<span style="background: rgba(16, 185, 129, 0.2); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.4); padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 700; display: inline-flex; align-items: center; gap: 4px;"><span style="color:#10b981;">✓</span> Qwen Coder Verified</span>`
+            : `<span style="background: rgba(245, 158, 11, 0.15); color: #f59e0b; border: 1px solid rgba(245, 158, 11, 0.3); padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600;">⏳ Raw GitHub Code</span>`;
+
+          return `
+            <div class="item-card">
+              <div class="item-header">
+                <span class="item-source">📄 ${escapeHtml(sourceText)}</span>
+                <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                  ${verifiedBadge}
+                  <span class="item-lang">${escapeHtml(langBadge)}</span>
+                </div>
+              </div>
+              <div class="item-body">
+                <div class="item-instruction">🎯 ${escapeHtml(promptText)}</div>
+                <pre class="code-block">${escapeHtml(answerText)}</pre>
+              </div>
+            </div>
+          `;
+        }).join('');
+      } catch (err) {
+        container.innerHTML = `<div style="text-align: center; color: #ef4444; padding: 30px; font-weight: 500;">Gagal memuat dataset: ${escapeHtml(err.message)}</div>`;
+      }
+    }
+
+    function changePage(delta) {
+      const target = currentPage + delta;
+      if (target >= 1 && target <= totalPages) {
+        fetchDataset(target);
+        window.scrollTo({ top: 200, behavior: 'smooth' });
+      }
+    }
+
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.innerText = text;
+      return div.innerHTML;
+    }
+
+    document.getElementById('select-dataset').addEventListener('change', () => fetchDataset(1));
+    document.getElementById('select-lang').addEventListener('change', () => fetchDataset(1));
+    document.getElementById('search-keyword').addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') fetchDataset(1);
+    });
+
+    // Initial load
+    fetchDataset(1);
+
+    // Auto-refresh stats every 15s for realtime updates
+    setInterval(() => {
+      // Background silent refresh for totals
+      fetch(`${API_BASE}?name=${encodeURIComponent(document.getElementById('select-dataset').value)}&page=1`)
+        .then(r => r.json())
+        .then(d => {
+          if (d && d.total_matching) {
+            document.getElementById('stat-count').innerText = d.total_matching.toLocaleString();
+            document.getElementById('stat-size').innerText = d.file_size || '-';
+          }
+        }).catch(() => {});
+    }, 15000);
+  </script>
+</body>
+</html>

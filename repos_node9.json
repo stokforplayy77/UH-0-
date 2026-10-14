@@ -1,0 +1,6 @@
+[
+  {"name": "Kotlin-Algorithms", "url": "https://github.com/TheAlgorithms/Kotlin.git", "ext": [".kt"], "lang": "Kotlin"},
+  {"name": "Swift-Algorithms", "url": "https://github.com/TheAlgorithms/Swift.git", "ext": [".swift"], "lang": "Swift"},
+  {"name": "PHP-Algorithms", "url": "https://github.com/TheAlgorithms/PHP.git", "ext": [".php"], "lang": "PHP"},
+  {"name": "Ruby-Algorithms", "url": "https://github.com/TheAlgorithms/Ruby.git", "ext": [".rb"], "lang": "Ruby"}
+]

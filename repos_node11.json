@@ -1,0 +1,6 @@
+[
+  {"name": "Python-Algorithms", "url": "https://github.com/TheAlgorithms/Python.git", "ext": [".py"], "lang": "Python"},
+  {"name": "TypeScript-Algorithms", "url": "https://github.com/TheAlgorithms/TypeScript.git", "ext": [".ts"], "lang": "TypeScript"},
+  {"name": "Rust-Algorithms", "url": "https://github.com/TheAlgorithms/Rust.git", "ext": [".rs"], "lang": "Rust"},
+  {"name": "Go-Algorithms", "url": "https://github.com/TheAlgorithms/Go.git", "ext": [".go"], "lang": "Go"}
+]

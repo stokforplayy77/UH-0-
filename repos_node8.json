@@ -1,0 +1,5 @@
+[
+  {"name": "C-Plus-Plus", "url": "https://github.com/TheAlgorithms/C-Plus-Plus.git", "ext": [".cpp", ".hpp"], "lang": "C++"},
+  {"name": "Java-Algorithms", "url": "https://github.com/TheAlgorithms/Java.git", "ext": [".java"], "lang": "Java"},
+  {"name": "C-Algorithms", "url": "https://github.com/TheAlgorithms/C.git", "ext": [".c", ".h"], "lang": "C"}
+]
